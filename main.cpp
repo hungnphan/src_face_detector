@@ -51,48 +51,9 @@ const size_t inHeight = 300;
 const double inScaleFactor = 1.0;
 const Scalar meanVal(104.0, 177.0, 123.0);
 
-/*
-dlib::rectangle openCVRectToDlib(cv::Rect r)
-{
-	return dlib::rectangle((long)r.tl().x, (long)r.tl().y, (long)r.br().x - 1, (long)r.br().y - 1);
-}
-
-cv::Rect dlibRectangleToOpenCV(dlib::rectangle r)
-{
-	return cv::Rect(cv::Point2i(r.left(), r.top()), cv::Point2i(r.right() + 1, r.bottom() + 1));
-}
 
 
-void dlib_point2cv_Point(full_object_detection& S, std::vector<cv::Point>& L, double& scale)
-{
-	for (unsigned int i = 0; i < S.num_parts(); ++i)
-	{
-		L.push_back(cv::Point(S.part(i).x()*(1 / scale), S.part(i).y()*(1 / scale)));
-	}
-}
 
-*/
-
-
-void mergeOverlappingBoxes(std::vector<cv::Rect> &inputBoxes, cv::Mat &image, std::vector<cv::Rect> &outputBoxes)
-{
-	cv::Mat mask = cv::Mat::zeros(image.size(), CV_8UC1); // Mask of original image
-	cv::Size scaleFactor(20, 20); // To expand rectangles, i.e. increase sensitivity to nearby rectangles. Doesn't have to be (10,10)--can be anything
-	for (int i = 0; i < inputBoxes.size(); i++)
-	{
-		cv::Rect box = inputBoxes.at(i) + scaleFactor;
-		cv::rectangle(mask, box, cv::Scalar(255), CV_FILLED); // Draw filled bounding boxes on mask
-	}
-
-	std::vector<std::vector<cv::Point>> contours;
-	// Find contours in mask
-	// If bounding boxes overlap, they will be joined by this function call
-	cv::findContours(mask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-	for (int j = 0; j < contours.size(); j++)
-	{
-		outputBoxes.push_back(cv::boundingRect(contours.at(j)));
-	}
-}
 
 
 Mat gammaCorrection(const Mat &img, const double gamma_)
@@ -125,11 +86,11 @@ const cv::Scalar meanVal1(104.0, 177.0, 123.0);
 
 #define CAFFE
 
-const std::string caffeConfigFile = "./deploy.prototxt";
-const std::string caffeWeightFile = "./res10_300x300_ssd_iter_140000_fp16.caffemodel";
+const std::string caffeConfigFile = "./models/deploy.prototxt";
+const std::string caffeWeightFile = "./models/res10_300x300_ssd_iter_140000_fp16.caffemodel";
 
-const std::string tensorflowConfigFile = "./opencv_face_detector.pbtxt";
-const std::string tensorflowWeightFile = "./opencv_face_detector_uint8.pb";
+const std::string tensorflowConfigFile = "./models/opencv_face_detector.pbtxt";
+const std::string tensorflowWeightFile = "./models/opencv_face_detector_uint8.pb";
 int cntFace = 0;
 
 void detectFaceOpenCVDNN(Net net, Mat &frameOpenCVDNN,bool &flat, Rect &roiF)
@@ -211,7 +172,7 @@ int main() {
 		cout << roi.tl() << " " << roi << endl;
 
 		CascadeClassifier face;
-		face.load("lbpcascade_frontalface.xml");
+		face.load("./models/lbpcascade_frontalface.xml");
 
 		// Testing the Video Stream (?)
 		// If OK then execute continue
@@ -316,11 +277,12 @@ int main() {
 		
 			object = gammaCorrection(object, 0.8);
 
-			std::vector<Rect> faceCandidates;
+
 
 		
 
-			// Find contours for Proposal Region Detection // 
+			// Find contours for Proposal Region Detection //
+			std::vector<Rect> faceCandidates;
 			std::vector<std::vector<Point> > contours;
 			std::vector<Rect> boundRect;
 			std::vector<Vec4i> hierarchy;
