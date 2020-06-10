@@ -3,19 +3,14 @@
 #include "background_model.h"
 #include "mixture_of_gaussian.h"
 #include "filter.h"
-//#include "Detector.h"
+
 
 
 #include <opencv2/ml.hpp>
 #include <opencv2/dnn.hpp>
-//#include <dlib/opencv.h>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/highgui/highgui.hpp>
-//#include <dlib/image_processing/frontal_face_detector.h>
-//#include <dlib/image_processing/render_face_detections.h>
-//#include <dlib/image_processing.h>
-//#include <dlib/gui_widgets.h>
 #include <opencv2/objdetect.hpp>
 
 #include <iostream>
@@ -25,15 +20,9 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-
-
 #include <opencv2/xphoto/white_balance.hpp>
 
-//#include <dlib/opencv.h>
-//#include <dlib/image_processing.h>
-//#include <dlib/dnn.h>
-//#include <dlib/data_io.h>
-//using namespace dlib;
+
 
 #define bug(x) cout << #x << " = " << x << endl;
 #define show(x) imshow(#x,x);
@@ -52,10 +41,6 @@ const double inScaleFactor = 1.0;
 const Scalar meanVal(104.0, 177.0, 123.0);
 
 
-
-
-
-
 Mat gammaCorrection(const Mat &img, const double gamma_)
 {
 	CV_Assert(gamma_ >= 0);
@@ -67,11 +52,8 @@ Mat gammaCorrection(const Mat &img, const double gamma_)
 
 	Mat res = img.clone();
 	LUT(img, lookUpTable, res);
-	//! [changing-contrast-brightness-gamma-correction]
-
-	//hconcat(img, res, img_gamma_corrected);
 	return res;
-	//imshow("Gamma correction", img_gamma_corrected);
+
 }
 
 using namespace cv::dnn;
@@ -82,7 +64,7 @@ const size_t inHeight1 = 50;
 const double inScaleFactor1 = 0.95;
 const float confidenceThreshold1 = 0.7;
 const cv::Scalar meanVal1(104.0, 177.0, 123.0);
-//const cv::Scalar meanVal1(26.0, 44.25, 30.75);
+
 
 #define CAFFE
 
@@ -138,13 +120,7 @@ int main() {
 	Net net = cv::dnn::readNetFromTensorflow(tensorflowWeightFile, tensorflowConfigFile);
 #endif
 
-	Mat grad_x, grad_y;
-	Mat abs_grad_x, abs_grad_y;
-	// Load face detection and pose estimation models.
-	//frontal_face_detector detector = get_frontal_face_detector();
-	//shape_predictor pose_model;
-	//dlib::shape_predictor predictor_;
-	//deserialize("shape_predictor_5_face_landmarks.dat") >> predictor_;
+
 	Mat inputImage, backgroundImage, foregroundImage, filter_foregroundImage, original;
 	Filter* filter_;
 	BackgroundModel* bg_model;
