@@ -192,16 +192,12 @@ int main() {
 	Size resolution(320, 240);
 	
 	Rect roi;
-	//roi.tl().x = 25;
-	//roi.tl.y = 6;
-	//roi.width = 634;
-	//roi.height = 438;
 	roi = Rect(Point(60, 20),
 		Point(550, 390));
-	//roi = Rect(Point(1,1), Point(636, 475));
+
 
 	string video[4];
-	video[0] = "P1L_S1_C2";
+	video[0] = "P1L_S1_C1";
 	video[1] = "P2E_S5_C2";
 	video[2] = "P2L_S1_C1";
 	video[3] = "P2L_S5_C2";
@@ -211,20 +207,11 @@ int main() {
 		// Initialize Video Capture Stream
 		VideoCapture cap(video[v] + ".avi");
 
-		
-		vector<Rect> roiTrackings;
 
-		//VideoCapture cap("https://root:Daicoviet12345????@hcmiucvip.com:8081/axis-media/media.amp");
-	
-	
-		//VideoCapture cap(0);
 		cout << roi.tl() << " " << roi << endl;
+
 		CascadeClassifier face;
-		
-		//
-		//std::vector<Rect> test;
-		//face.detectMultiScale(inputImage, test, 1.1, 3, 0, Size(30, 30));
-		//ofstream  file("out.txt");
+		face.load("lbpcascade_frontalface.xml");
 
 		// Testing the Video Stream (?)
 		// If OK then execute continue
@@ -240,7 +227,7 @@ int main() {
 		{
 			cout << "Read the video !\n";
 			cap.retrieve(inputImage);
-			resize(inputImage, inputImage, Size(640, 480));
+			//resize(inputImage, inputImage, Size(640, 480));
 			//resolution = inputImage.size();
 			resize(inputImage, inputImage, resolution, 0, 0, CV_INTER_LINEAR);
 		}
@@ -271,19 +258,12 @@ int main() {
 		Mat image, src, src_gray;
 		Mat grad;
 		
-		int ksize = 3;
-		int scale = 1;
-		int delta = 0;
-		int ddepth = CV_16S;
-		int key = 0;
-		Mat roiMat;
-		int cnt = 0;
-
 		
+
+
+		int cnt = 0;
 		int numFrame = 0;
 
-		//int cnt_faces = 0;
-		int faces_prev = 0;
 
 		clock_t tStart = clock();
 		while (true)
@@ -293,13 +273,9 @@ int main() {
 			{
 				break;
 			}
+
 			resize(inputImage, inputImage, Size(640, 480));
 			++numFrame;
-			
-			//bitwise_and(inputIe.clone();.
-			//imshow("samplemage, inputImage, sample, ROImask);
-			//inputImage = sampl", sample);
-			//GammaCorrection(inputImage, inputImage, 0.7);
 			original = inputImage.clone();
 
 			resize(inputImage, inputImage, resolution, 0, 0, CV_INTER_LINEAR);
@@ -312,7 +288,10 @@ int main() {
 				continue;
 			}
 
-		//	cout << original.size() << endl;
+
+
+			// I. Background Substraction //
+
 			Mat* background_img_t = bg_model->getBackground();
 			Mat* foreground_img_t = bg_model->getForeground();
 
@@ -320,54 +299,28 @@ int main() {
 			foregroundImage = foreground_img_t->clone();								// foreground_img in BGR
 
 			filter_->createBinaryForeground(foregroundImage, filter_foregroundImage);	// binary_foreground in CV_8U	
-		//	cout << filter_foregroundImage.type() << endl;
 			resize(filter_foregroundImage, filter_foregroundImage, Size(640, 480));
-			//	show(inputImage);
-			//show(filter_foregroundImage);
-
-
-
 			show(filter_foregroundImage);
 
-			face.load("lbpcascade_frontalface.xml");
-
+			// get roi region in the original Image //
 			Mat roiRegion = original(roi);
 			show(roiRegion);
+
+			// get roi region in the filter foreground Image  //
 			Mat roiFore = filter_foregroundImage(roi);
-			//show(roiFore);
-			
-			Mat dst;
-			int dilation_size = 2;
-			int erosion_size = 2;
 
 			
-			
-
-
-			//detect.detect(roiRegion, roiFore);
-			//imwrite("G:/Project1/Project1/result_SSD/" + video[v] + "/S2/" + to_string(cnt) + "_AT_Mor.jpg", roiFore);
-			
-			//imshow(window_name, roiFore);
-			
-			
-			//imwrite("G:/Project1/Project1/result_SSD/" + video[v] + "/S1/" + to_string(cnt) + "_BG_1.jpg", roiFore);
+			// Filter moving objects // 
 			Mat object;
 			bitwise_and(roiRegion, roiRegion, object, roiFore);
-			//Mat printStep1;
-			//bitwise_and(original, original, printStep1, filter_foregroundImage);
 		
 			object = gammaCorrection(object, 0.8);
-			
-			//show(object);
-			//resize(object, object, Size(640, 480));
-			//resize(object, object, Size(640, 480));
-			//imwrite("G:/Project1/Project1/result_SSD/" + video[v] + "/S1/" + to_string(cnt) + "_BG.jpg", printStep1);
-		//	imwrite("G:/Project1/Project1/result_SSD/" + videm[v] + "/S1/" + to_string(cnt) + ".jpg", original);
+
 			std::vector<Rect> faceCandidates;
-			//std::vector<Mat> faceCandidates;
+
 		
 
-			Mat canny_output;
+			// Find contours for Proposal Region Detection // 
 			std::vector<std::vector<Point> > contours;
 			std::vector<Rect> boundRect;
 			std::vector<Vec4i> hierarchy;
@@ -384,32 +337,32 @@ int main() {
 				}
 			}
 
+
+
+			// II. Proposal Region Detection //
+			// Local Binary Pattern OpenCV 3.4
 			for (int i = 0; i < boundRect.size(); ++i)
 			{
-				//cv::rectangle(object, boundRect[i], 150);
+
 				Mat faceRoi = object(boundRect[i]);
-				//show(faceRoi);
 				cvtColor(faceRoi, faceRoi, CV_RGB2GRAY);
+				
+				// Histogram equalization //
 				equalizeHist(faceRoi, faceRoi);
-				//show(faceRoi);
 				std::vector<Rect> faces;
 				face.detectMultiScale(faceRoi, faces, 1.1, 3, 0, Size(35, 35));
-				//cnt_faces = faces.size();
 
 				for (int j = 0; j < faces.size(); ++j)
 				{
-					//++total_faces;
-					//cv::rectangle(original, Rect(Point(roi.x +  boundRect[i].x + faces[j].x,roi.y + boundRect[i].y + faces[j].y),
-					//	Point(roi.x + boundRect[i].x + faces[j].x + faces[j].width, roi.y + boundRect[i].y + faces[j].y + faces[j].height)), cv::Scalar(255, 0, 0), 2, 4);
 					faceCandidates.push_back(Rect(Point(boundRect[i].x + faces[j].x, boundRect[i].y + faces[j].y),
 						Point(boundRect[i].x + faces[j].x + faces[j].width, boundRect[i].y + faces[j].y + faces[j].height)));
 				}
 			}
 			
-		//	cout <<"faceCandidates " << faceCandidates.size() << endl;
+
+			// III. Face Detection using SSD - ResNet10 // 
 			for (int i = 0; i < faceCandidates.size(); ++i)
 			{
-				//	double scale = 1.0;
 				Mat temp = roiRegion(faceCandidates[i]);
 				 //int x1, y1;
 				 double confidence = 0;
@@ -417,34 +370,11 @@ int main() {
 				 Rect roiF;
 				 bool check = false;
 				 detectFaceOpenCVDNN(net, temp, check, roiF);
-				 /*
-				 if (check == true) 
-				 {
-					 Rect roiTracking;
-					 Point newtl, newbr;
-					 newtl.x = std::max(0, roi.x + faceCandidates[i].x + (int)(roiF.tl().x));
-					 newtl.y = std::max(0, roi.y + faceCandidates[i].y + (int)(roiF.tl().y));
-
-					 newtl.x = std::min(638, roi.x + faceCandidates[i].x + (int)(roiF.br().x));
-					 newtl.y = std::min(478, roi.y + faceCandidates[i].y + (int)(roiF.br().y));
-
-
-					 int x1 = max(0, int(roi.x + faceCandidates[i].x + roiF.x - roiF.width*0.5));
-					 int y1 = max(0, int(roi.y + faceCandidates[i].y + roiF.y - roiF.height*0.5));
-					 int x2 = min(635, int(roi.x + faceCandidates[i].x + roiF.x + roiF.width + roiF.width*0.5));
-					 int y2 = min(475, int(roi.y + faceCandidates[i].y + roiF.y + roiF.height + roiF.height * 0.5));
-					 roiTracking = Rect(Point(x1, y1), Point(x2, y2));
-					 roiTrackings.push_back(roiTracking);
-				 }*/
-				 ///rectangle(original, Rect(Point(x1, y1), Point(x2, y2)), Scalar(0, 0, 0));
 			}
 			
-			//show(object);
-			Mat compare;
+
 			show(original);
-			//imwrite("G:/Project1/Project1/result_SSD/" + video[v] + "/S3/" + to_string(cnt) + ".jpg", original);
 			++cnt;
-			//imwrite("result_compare/P2E_S5_C1/" + to_string(++cnt) + ".jpg", compare);
 
 			// [Run Option 1] Output frame-by-frame
 			//waitKey(0);
