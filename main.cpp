@@ -201,7 +201,7 @@ int main() {
 	//roi = Rect(Point(1,1), Point(636, 475));
 
 	string video[4];
-	video[0] = "P1L_S1_C1";
+	video[0] = "P1L_S1_C2";
 	video[1] = "P2E_S5_C2";
 	video[2] = "P2L_S1_C1";
 	video[3] = "P2L_S5_C2";
@@ -327,55 +327,10 @@ int main() {
 
 
 
-			//face.load("lbpcascade_frontalface.xml");
-			face.load("haarcascade_frontalface_alt2.xml");
-			//cout << roiTrackings.size() << endl;
-			for (int i = 0; i < roiTrackings.size(); ++i)
-			{
-				Mat getROI = original(roiTrackings[i]);
-				cvtColor(getROI, getROI, CV_RGB2GRAY);
-				equalizeHist(getROI, getROI);
-				//show(faceRoi);
-				std::vector<Rect> faces;
-				face.detectMultiScale(getROI, faces, 1.1, 3, 0, Size(30, 30));
-				cout << "faces tracking: " << faces.size() << endl;
-				if (faces.size() > 0) {
-					for (int j = 0; j < faces.size(); ++j)
-					{
-
-						rectangle(original, Rect(Point(roiTrackings[i].x + faces[j].x, roiTrackings[i].y + faces[j].y),
-							Point(roiTrackings[i].x + faces[j].x + faces[j].width, roiTrackings[i].y + faces[j].y + faces[j].height)), cv::Scalar(0, 255, 0), 2, 4);
-						int x1 = max(1, int(roiTrackings[i].x + faces[j].x - faces[j].width*0.2));
-						int y1 = max(1, int(roiTrackings[i].y + faces[j].y - faces[j].height*0.2));
-						int x2 = min(635, int(roiTrackings[i].x + faces[j].x + faces[j].width + faces[j].width * 0.2));
-						int y2 = min(475, int(roiTrackings[i].y + faces[j].y + faces[j].height + faces[j].height * 0.2));
-						
-						Rect temp = Rect(Point(roiTrackings[i].x + faces[j].x, roiTrackings[i].y + faces[j].y),
-							Point(roiTrackings[i].x + faces[j].x + faces[j].width, roiTrackings[i].y + faces[j].y + faces[j].height));
-						roiTrackings[i] = Rect(Point(x1, y1), Point(x2, y2));
-						//cout << temp << endl;
-						//cout << filter_foregroundImage.size() << endl;
-						Mat roi = filter_foregroundImage(temp);
-						//show(roi);
-						///show(original(temp));
-						roi.setTo(Scalar(0, 0, 0));
-					}
-				}
-				else
-				{
-					if (roiTrackings.size() > 0) {
-						roiTrackings.erase(roiTrackings.begin() + i);
-						--i;
-					}
-				}
-
-			}
-		//	cout << "Done " << endl;
-
 			show(filter_foregroundImage);
 
 			face.load("lbpcascade_frontalface.xml");
-			//face.load("haarcascade_frontalface_alt2.xml");
+
 			Mat roiRegion = original(roi);
 			show(roiRegion);
 			Mat roiFore = filter_foregroundImage(roi);
